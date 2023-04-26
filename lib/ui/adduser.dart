@@ -363,13 +363,13 @@ void _logOut() async{
 
   void createUser(BuildContext context) async {
    Employee employee = Employee(UID, Name, UUID, PhoneNumber, Address, allotted_office, manager,  );
- if (email != null && password != null && _userRef != null && _employeeIDRef!= null) {
+ if (email == null && password != null && _userRef != null && _employeeIDRef!= null) {
     try {
           signUp(email, password);
         //  .then((String value)  {
            
         
-          
+         // fhfhfh
           _userRef?.child('userss').set(employee.toJson());
           _employeeIDRef?.child(UID.toString()).set(email);
           showDialog(
