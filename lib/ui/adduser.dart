@@ -18,13 +18,13 @@ class _AddUSerState extends State<AddUser> {
   final _formKey = GlobalKey<FormState>();
 
    String? key;
-  int? UID;
-   String? Name;
-   String? UUID;
-   String? PhoneNumber;
-   String? Address;
-   String? allotted_office;
-   String? manager;
+  int UID=0;
+   String Name='';
+   String UUID='';
+   String PhoneNumber='';
+   String Address='';
+   String allotted_office='';
+   String manager='';
 
  late String email, password;
 
@@ -338,7 +338,7 @@ void _logOut() async{
                         if(_formKey.currentState!.validate()){createUser(context);}
                         },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue
+                      primary: Colors.blue
                     ),
                     ))),
                      Container(
@@ -350,7 +350,7 @@ void _logOut() async{
                       
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red
+                        primary: Colors.red
                       ),
                     )))
               ],
@@ -362,35 +362,41 @@ void _logOut() async{
   
 
   void createUser(BuildContext context) async {
-   Employee employee = Employee(UID, Name, UUID, PhoneNumber, Address, allotted_office, manager,  );
- if (email == null && password != null && _userRef != null && _employeeIDRef!= null) {
+    ///UID, Name, UUID, PhoneNumber, Address, allotted_office, manager,
+    Employee employee = Employee( UID: UID, Name: Name, UUID: UUID, PhoneNumber: PhoneNumber, Address: Address, allotted_office: allotted_office, manager: manager);
+ if (email.toString().isNotEmpty && password.toString().isNotEmpty) {
     try {
-          signUp(email, password);
+          String uid= await signUp(email, password);
+          if(uid=='Error'){
+            print('There is an error');
+          }else{
+            _userRef?.child(uid).set(employee.toJson());
+            _employeeIDRef?.child(UID.toString()).set(email);
+            showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text("User Added Successfully"),
+                    content: Text(
+                        "User can start using his account through his employee Email and password."),
+                  );  });
+
+            //});
+          }
         //  .then((String value)  {
            
         
          // fhfhfh
-          _userRef?.child('userss').set(employee.toJson());
-          _employeeIDRef?.child(UID.toString()).set(email);
-          showDialog(
-            context: context, 
-            builder: (BuildContext context) {
-              return AlertDialog(
-            title: Text("User Added Successfully"),
-            content: Text(
-                "User can start using his account through his employee ID and password."),
-          );  });
-         
-      //});
-    } catch (e) {
+
+    } on FirebaseAuthException catch (e) {
       print("in catch");
        showDialog(
-            context: context, 
+            context: context,
             builder: (BuildContext context) {
               return AlertDialog(
             title: Text("error"),
             content: Text(
-                e.toString()),
+                e.toString().split(']')[1]),
           );  });
       print(e.toString());
     }

@@ -89,7 +89,7 @@ final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   }
 
 
-  Future<void> signUp(String email, String password) async {
+  Future<String> signUp(String email, String password) async {
   try {
     UserCredential result = await firebaseAuth.createUserWithEmailAndPassword(
       email: email,
@@ -97,11 +97,10 @@ final FirebaseFirestore _firestore = FirebaseFirestore.instance;
     );
     User? user = result.user;
     String uidvar = user!.uid;
-   // return uidvar;
-  } catch (e) {
-    // Handle the error here
-    print('Sign up error: $e');
-    throw e;
+    return uidvar;
+  } on FirebaseAuthException catch (e) {
+    print('Error');
+    return 'Error';
   }
 }
 
