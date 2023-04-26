@@ -35,13 +35,13 @@ class Employee {
 
   toJson() {
     return {
-      "UID": UID ?? ' ',
-      "Name": Name ?? ' ',
-      "UUID": UUID ?? ' ',
-      "PhoneNumber": PhoneNumber ?? ' ',
-      "Address": Address ?? ' ',
-      "allotted_office": allotted_office ?? ' ',
-      "manager": manager ?? ' ',
+      "UID": UID ,
+      "Name": Name ,
+      "UUID": UUID ,
+      "PhoneNumber": PhoneNumber ,
+      "Address": Address ,
+      "allotted_office": allotted_office ,
+      "manager": manager ,
     };
   }
 }
