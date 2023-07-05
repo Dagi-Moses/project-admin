@@ -5,6 +5,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:admin/models/employee.dart';
 import 'package:admin/services/authentication.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'login.dart';
 
@@ -18,22 +19,24 @@ class _AddUSerState extends State<AddUser> {
   final _formKey = GlobalKey<FormState>();
 
    String? key;
-  int UID=0;
-   String Name='';
-   String UUID='';
-   String PhoneNumber='';
-   String Address='';
-   String allotted_office='';
-   String manager='';
+
+  int? UID;
+   String? Name;
+   String? UUID;
+   String? PhoneNumber;
+   String? Address;
+   String? allotted_office;
+   String? manager;
 
  late String email, password;
-
-  FirebaseDatabase db = FirebaseDatabase.instance;
-  DatabaseReference ?_managerRef, _officeRef, _userRef, _employeeIDRef;
-  String? _errorMessage = '';
   var dropdownValueOffice, dropdownValueManager;
   String managerHintText = "Loading ...", officeHintText = "Loading ...";
 
+  FirebaseFirestore db = FirebaseFirestore.instance;
+ CollectionReference ? _managerRef, _officeRef, _userRef;
+ DocumentReference? _employeeIDRef;
+  String? _errorMessage = '';
+ 
   Map<String, dynamic>? officeList  = {
   'office1': {
     'address': '123 Main St',
@@ -86,17 +89,17 @@ class _AddUSerState extends State<AddUser> {
 };
  List<String> managerKeys =[];
 
-
-
   @override
   void initState() {
-    _managerRef = db.ref().child('managers');
-   _managerRef!.set(managerList);
+     _managerRef = db.collection('managers');
+  _managerRef!.doc('managerList').set(managerList);
 
-    _officeRef = db.ref().child('location');
-    _officeRef!.set(officeList);
-    _userRef = db.ref().child('users');
-    _employeeIDRef = db.ref().child('employeeID');
+  _officeRef = db.collection('location');
+  _officeRef!.doc('officeList').set(officeList);
+  
+  _userRef = db.collection('users');
+  
+
 
     _getOffices();
     _getManagers();
@@ -107,28 +110,31 @@ class _AddUSerState extends State<AddUser> {
   void _getOffices() async {
     officeHintText = "Choose Location";
        officeKeys = officeList!.keys.toList();
-    _officeRef?.once().then((DataSnapshot snapshot) {
+    _officeRef?.doc('officeList').get().then((DocumentSnapshot snapshot) {
       setState(() {
-        officeList =  snapshot.value as  Map<String, dynamic> ;
+        officeList =  snapshot.data() as  Map<String, dynamic> ;
         officeKeys = officeList!.keys.toList();
         officeHintText = "Choose Location";
       });
       
-    } as FutureOr Function(DatabaseEvent value));
+    } );
   }
 
   void _getManagers() async {
      managerKeys = managerList!.keys.toList();
      managerHintText = "Choose Manager";
-    _managerRef?.once().then((DataSnapshot snapshot) {
+    _managerRef?.doc('managerList').get().then((DocumentSnapshot snapshot) {
       setState((){
-        managerList =  snapshot.value as  Map<String, dynamic>;
+        managerList =  snapshot.data() as  Map<String, dynamic>;
         managerKeys = managerList!.keys.toList();
         managerHintText = "Choose Manager";
       });
       
-    } as FutureOr Function(DatabaseEvent value));
+    } );
   }
+
+
+
 void _logOut() async{
     await signOut();
     Navigator.of(context).pushAndRemoveUntil(
@@ -150,7 +156,7 @@ void _logOut() async{
             child: ListView(
               children: [
                 Container(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+                  padding: const EdgeInsets.fromLTRB(20,10,20,10),
                   child: TextFormField(
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
@@ -334,11 +340,11 @@ void _logOut() async{
                     child: Center(
                         child: ElevatedButton(
                       child: Text("Add Employee", style: TextStyle(color: Colors.white)),
-                      onPressed: () { 
-                        if(_formKey.currentState!.validate()){createUser(context);}
+                      onPressed: () async{ 
+                        createUser(context);
                         },
                     style: ElevatedButton.styleFrom(
-                      primary: Colors.blue
+                      backgroundColor: Colors.blue
                     ),
                     ))),
                      Container(
@@ -350,7 +356,7 @@ void _logOut() async{
                       
                       },
                       style: ElevatedButton.styleFrom(
-                        primary: Colors.red
+                        backgroundColor: Colors.red
                       ),
                     )))
               ],
@@ -358,58 +364,59 @@ void _logOut() async{
       ),
     );
   }
+void authenticate () {
+  if (UID == null || Name == null || UUID == null || PhoneNumber == null || Address == null || allotted_office == null || manager == null || email.isEmpty || password.isEmpty) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text("Please fill in all fields"),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text("OK"),
+        ),
+      ],
+    ),
+  );
+} else {
+  createUser(context);
+  _formKey.currentState!.reset();
+}
 
+}
   
 
   void createUser(BuildContext context) async {
-    ///UID, Name, UUID, PhoneNumber, Address, allotted_office, manager,
-    Employee employee = Employee( UID: UID, Name: Name, UUID: UUID, PhoneNumber: PhoneNumber, Address: Address, allotted_office: allotted_office, manager: manager);
- if (email.toString().isNotEmpty && password.toString().isNotEmpty) {
+   Employee employee = Employee(Address: Address!, Name: Name!, PhoneNumber: PhoneNumber!, UUID: UUID!, UID: UID!, allotted_office: allotted_office!, manager: manager!,  );
+ 
     try {
-          String uid= await signUp(email, password);
-          if(uid=='Error'){
-            print('There is an error');
-          }else{
-            _userRef?.child(uid).set(employee.toJson());
-            _employeeIDRef?.child(UID.toString()).set(email);
-            showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: Text("User Added Successfully"),
-                    content: Text(
-                        "User can start using his account through his employee Email and password."),
-                  );  });
-
-            //});
-          }
-        //  .then((String value)  {
-           
-        
-         // fhfhfh
-
-    } on FirebaseAuthException catch (e) {
-      print("in catch");
-       showDialog(
-            context: context,
+        String uid =  await signUp(email, password) ;
+          _userRef?.doc(uid).set(employee.toJson());
+          _employeeIDRef = db.collection('employeeID').doc(UID.toString());
+          _employeeIDRef!.set({'email':email});
+          showDialog(
+            context: context, 
             builder: (BuildContext context) {
               return AlertDialog(
-            title: Text("error"),
+            title: Text("User Added Successfully"),
             content: Text(
-                e.toString().split(']')[1]),
+                "User can start using his account through his employee ID and password."),
           );  });
-      print(e.toString());
-    }
-}else{
-  showDialog(
+         
+    } catch (e) {
+      print("in catch");
+       showDialog(
             context: context, 
             builder: (BuildContext context) {
               return AlertDialog(
             title: Text("error"),
             content: Text(
-                'bullshit'));
-});  
+                e.toString()),
+          );  });
+      print(e.toString());
+    }
+}
+}
       
-}
-  }
-}
+
+  

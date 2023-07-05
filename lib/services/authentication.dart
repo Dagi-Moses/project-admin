@@ -100,7 +100,7 @@ final FirebaseFirestore _firestore = FirebaseFirestore.instance;
     return uidvar;
   } on FirebaseAuthException catch (e) {
     print('Error');
-    return 'Error';
+    return e.toString();
   }
 }
 

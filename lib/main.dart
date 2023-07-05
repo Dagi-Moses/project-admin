@@ -49,7 +49,7 @@ class _MyAppState extends State<MyApp> {
               primarySwatch: Colors.blue,
             ),
             home:  
-            SplashScreenWidget(),
+            LoginPage(),
             ),
     );
    
